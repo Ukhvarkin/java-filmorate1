@@ -24,47 +24,66 @@ public class FilmController {
   @GetMapping
   public Collection<Film> findAll() {
     log.info("GET запрос.");
+    log.debug("Добавлен фильм: {}.", films.size());
     return new ArrayList<>(films.values());
   }
 
   @PostMapping
-  public Film create(@Valid @RequestBody Film film) {
+  public Film create(@Valid @RequestBody Film film) throws ValidationException {
     log.info("POST запрос.");
-      filmValidator(film);
-      film.setId(id);
-      films.put(id, film);
-      id++;
-      log.info("Фильм добавлен.");
+    filmValidator(film);
+    film.setId(id);
+    films.put(id, film);
+    id++;
+    log.debug("Добавлен фильм: {}.", film.getName());
     return film;
   }
 
   @PutMapping
-  public Film update(@Valid @RequestBody Film film) {
+  public Film update(@Valid @RequestBody Film film) throws ValidationException {
     log.info("PUT запрос.");
+    filmValidator(film);
     if (films.containsKey(film.getId())) {
-      filmValidator(film);
-      films.put(id, film);
+      films.put(film.getId(), film);
       log.info("Фильм обновлен.");
     } else {
-      throw new ValidationException("Фильм с таким id не найден.");
+      String message = "Фильма с таким id не найдено.";
+      log.warn(message);
+      throw new ValidationException(message);
     }
     return film;
   }
 
-  private void filmValidator(Film film) {
-    if (film.getName()==null) {
-      log.warn("Название фильма отсутствует.");
-      throw new ValidationException("Введите название фильма.");
-    } else if (film.getDescription().length() > 200) {
-      log.warn("Больше 200 символов в названии.");
-      throw new ValidationException("Название должно содержать не больше 200 символов.");
-    } else if (film.getReleaseDate().isBefore(startFilmDate)) {
-      log.warn("Дата релиза раньше 28.12.1895.");
-      throw new ValidationException("Дата фильма должна быть после 28.12.1895.");
-    } else if (film.getDuration() < 0) {
-      log.warn("Продолжительность фильма меньше 1.");
-      throw new ValidationException("Введите продолжительность равную больше 0.");
+  private void filmValidator(Film film) throws ValidationException {
+    if (film == null) {
+      String message = "Некорректный ввод. Передан пустой фильм.";
+      log.warn(message);
+      throw new ValidationException(message);
     }
-    log.info("Валидация закончена.");
+    if (film.getName() == null || film.getDescription() == null) {
+      String message = "Некорректный ввод, есть пустые поля.";
+      log.warn(message);
+      throw new ValidationException(message);
+    }
+    if (film.getName().isBlank()){
+      String message = "Некорректный ввод, пустое поле названия.";
+      log.warn(message);
+      throw new ValidationException(message);
+    }
+    if (film.getDescription().length() > 200) {
+      String message = "В описании больше 200 символов.";
+      log.warn(message);
+      throw new ValidationException(message);
+    }
+    if (film.getReleaseDate().isBefore(startFilmDate)) {
+      String message = "Дата фильма должна быть после 28.12.1895.";
+      log.warn(message);
+      throw new ValidationException(message);
+    }
+    if (film.getDuration() < 0) {
+      String message = "Продолжительность фильма должна быть больше 0.";
+      log.warn(message);
+      throw new ValidationException(message);
+    }
   }
 }

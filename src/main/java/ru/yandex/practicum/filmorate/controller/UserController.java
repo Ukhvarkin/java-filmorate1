@@ -23,45 +23,65 @@ public class UserController {
   @GetMapping
   public Collection<User> findAll() {
     log.info("GET запрос.");
+    log.debug("Добавлен пользователь: {}.", users.size());
     return new ArrayList<>(users.values());
   }
 
   @PostMapping
-  public User create(@Valid @RequestBody User user) {
+  public User create(@Valid @RequestBody User user) throws ValidationException {
     log.info("Post запрос");
     userValidator(user);
     user.setId(id);
     users.put(id, user);
     id++;
-    log.info("Пользователь добавлен.");
+    log.debug("Добавлен пользователь: {}.", user.getLogin());
     return user;
   }
 
   @PutMapping
-  public User update(@Valid @RequestBody User user) {
+  public User update(@Valid @RequestBody User user) throws ValidationException {
     log.info("PUT запрос");
+    userValidator(user);
     if (users.containsKey(user.getId())) {
-      userValidator(user);
       users.put(user.getId(), user);
       log.info("Пользователь обновлен.");
-    } else {
-      throw new ValidationException("Пользователь с таким id не найден.");
+    }else {
+      String message = "Пользователя с таким id не найдено.";
+      log.warn(message);
+      throw new ValidationException(message);
     }
     return user;
   }
 
-  private void userValidator(User user) {
-    log.info("Запущена проверка.");
-    if (user.getLogin().contains(" ")) {
-      log.warn("Пользователь не добавлен. Неверный логин.");
-      throw new ValidationException("Логин не должен содержать пробелов.");
-    } else if (user.getName() == null) {
-      user.setName(user.getLogin());
-    } else if (user.getBirthday().isAfter(LocalDate.now())) {
-      log.warn("Неверная дата.");
-      throw new ValidationException("Дата рождения не может быть в будущем.");
+  private void userValidator(User user) throws ValidationException {
+    if (user == null){
+      String message = "Некорректный ввод. Передан пустой пользователь.";
+      log.warn(message);
+      throw new ValidationException(message);
     }
-    log.info("Валидация закончена.");
+    if (user.getEmail() == null || user.getLogin() == null || user.getBirthday() == null) {
+      String message = "Некорректный ввод, есть пустые поля.";
+      log.warn(message);
+      throw new ValidationException(message);
+    }
+    if (user.getEmail().isBlank() || !user.getEmail().contains("@")) {
+      String message = "Некорректный ввод электронной почты.";
+      log.warn(message);
+      throw new ValidationException(message);
+    }
+    if (user.getLogin().isBlank() || user.getLogin().contains(" ")) {
+      String message = "Некорректный ввод. Логин не должен содержать пробелов.";
+      log.warn(message);
+      throw new ValidationException(message);
+    }
+    if (user.getName() == null || user.getName().isBlank()) {
+      user.setName(user.getLogin());
+      log.debug("Пользователю присвоено имя: {}.", user.getName());
+    } else if (user.getBirthday().isAfter(LocalDate.now())) {
+      String message = "Дата рождения не может быть в будущем.";
+      log.warn(message);
+      throw new ValidationException(message);
+    }
   }
 
 }

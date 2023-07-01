@@ -4,11 +4,14 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
 
 @Data
+@Builder
 public class Film {
   private int id;
   @NotNull(message = "Название не может быть пустым.")
@@ -20,10 +23,4 @@ public class Film {
   @Min(1)
   private long duration;
 
-  public Film(@NotNull String name, String description, LocalDate releaseDate, long duration) {
-    this.name = name;
-    this.description = description;
-    this.releaseDate = releaseDate;
-    this.duration = duration;
-  }
 }
